@@ -63,7 +63,7 @@ class MyAI( AI ):
                 self.add_stateSpace("F",self.toflag[0][0],self.toflag[0][1],number)
                 temp_toflag=collections.deque()
                 temp_toflag.append(self.toflag[0])
-                self.todo.popleft()
+                self.toflag.popleft()
                 self.mine_count-=1
                 return Action(AI.Action.FLAG,temp_toflag[0][0],temp_toflag[0][1])
             elif number==0:
@@ -129,14 +129,33 @@ class MyAI( AI ):
                                     self.add_stateSpace("F",temp_toflag[0][0],temp_toflag[0][1],number)
                                     self.mine_count-=1
                                     return Action(AI.Action.FLAG,temp_toflag[0][0],temp_toflag[0][1])
-                            #else:
-                                #continue
-                                #selective opening check-chnge else to elif
+                                else:
+                                    continue
+    
                             elif self.action_taken[i][3]==-1:
-                                return Action(AI.Action.LEAVE)
-                                #continue-Remove after minimal sub
+                                #return Action(AI.Action.LEAVE)
+                                continue
                             else:
-                                return Action(AI.Action.LEAVE)
+                                continue
+                                #return Action(AI.Action.LEAVE)
+                        #Random Uncover
+                        tileX=self.action_taken[-1][1]
+                        tileY=self.action_taken[-1][2]
+                        neighbors_list=self.neighbors(tileX,tileY)
+                        adjacents_left=self.adjacent_left(neighbors_list)
+                        if adjacents_left:
+                            random_tile=adjacents_left[(int)(len(adjacents_left)/2)]
+                            self.todo.append(random_tile)
+                            self.counter=len(self.todo)
+                            temp_todo=collections.deque()
+                            temp_todo.append(self.todo[0])
+                            self.todo.popleft()
+                            self.add_stateSpace("U",temp_todo[0][0],temp_todo[0][1],number)
+                            return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
+                        else:
+                            #GIVE UP!!!!! 
+                            return Action(AI.Action.LEAVE)
+                    
                 else:
                     return Action(AI.Action.LEAVE)
                     
@@ -146,7 +165,7 @@ class MyAI( AI ):
                         neighbors_list=self.neighbors(self.action_taken[-(i+1)][1],self.action_taken[-(i+1)][2])
                         adjacents_left=self.adjacent_left(neighbors_list)
                         if adjacents_left:
-                            for pairs in neighbors_list:
+                            for pairs in adjacents_left:
                                 self.todo.append(pairs)  
                             self.counter=len(self.todo)
                             temp_todo=collections.deque()
@@ -161,9 +180,10 @@ class MyAI( AI ):
                 tileY=self.action_taken[-1][2]
                 neighbors_list=self.neighbors(tileX,tileY)
                 adjacents_left=self.adjacent_left(neighbors_list)
+                num_flags=self.num_flag_checker(neighbors_list)
                 if number==len(adjacents_left):
                     #bomb condition-check if its touching bombs 
-                    num_flags=self.num_flag_checker(neighbors_list)
+                   
                     if(num_flags==0):
                         for pairs in adjacents_left:
                             self.toflag.append(pairs)
@@ -232,7 +252,190 @@ class MyAI( AI ):
                                     self.mine_count-=1
                                     return Action(AI.Action.FLAG,temp_toflag[0][0],temp_toflag[0][1])
                                 else:
-                                    return Action(AI.Action.LEAVE)
+                                    #return Action(AI.Action.LEAVE)
+                                    continue
+                        #Random Uncover
+                        tileX=self.action_taken[-1][1]
+                        tileY=self.action_taken[-1][2]
+                        neighbors_list=self.neighbors(tileX,tileY)
+                        adjacents_left=self.adjacent_left(neighbors_list)
+                        if adjacents_left:
+                            random_tile=adjacents_left[(int)(len(adjacents_left)/2)]
+                            self.todo.append(random_tile)
+                            self.counter=len(self.todo)
+                            temp_todo=collections.deque()
+                            temp_todo.append(self.todo[0])
+                            self.todo.popleft()
+                            self.add_stateSpace("U",temp_todo[0][0],temp_todo[0][1],number)
+                            return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
+                        else:
+                            #GIVE UP!!!!! 
+                            return Action(AI.Action.LEAVE)
+                    
+                elif num_flags==number:
+                        if adjacents_left:
+                            for pair in adjacents_left:
+                                self.todo.append(pair)
+                            #check continue condition
+                            self.counter=len(self.todo)
+                            self.add_stateSpace("U",self.todo[0][0],self.todo[0][1],number)
+                            temp_todo=collections.deque()
+                            temp_todo.append(self.todo[0])
+                            self.todo.popleft()
+                            return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
+                        else:
+                            for i in range(1,len(self.action_taken)):
+                                if self.action_taken[i][3]==0:
+                                    tileX=self.action_taken[i-1][1]
+                                    tileY=self.action_taken[i-1][2]
+                                    neighbors_list=self.neighbors(tileX,tileY)
+                                    adjacents_left=self.adjacent_left(neighbors_list)
+                                    if adjacents_left:
+                                        for pair in adjacents_left:
+                                            self.todo.append(pair)
+                                    else:
+                                        continue 
+                                    self.counter=len(self.todo)
+                                    self.add_stateSpace("U",self.todo[0][0],self.todo[0][1],number)
+                                    temp_todo=collections.deque()
+                                    temp_todo.append(self.todo[0])
+                                    self.todo.popleft()
+                                    return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
+                        
+                                elif self.action_taken[i][3] in range(1,9):
+                                    tileX=self.action_taken[i-1][1]
+                                    tileY=self.action_taken[i-1][2]
+                                    neighbors_list=self.neighbors(tileX,tileY)
+                                    adjacents_left=self.adjacent_left(neighbors_list)
+                                    num_flags=self.num_flag_checker(neighbors_list)
+                                    if num_flags==self.action_taken[i][3]:
+                                        if adjacents_left:
+                                            for pair in adjacents_left:
+                                                self.todo.append(pair);
+                                            self.counter=len(self.todo)
+                                            self.add_stateSpace("U",self.todo[0][0],self.todo[0][1],number)
+                                            temp_todo=collections.deque()
+                                            temp_todo.append(self.todo[0])
+                                            self.todo.popleft()
+                                            return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
+                                        else:
+                                            continue
+                                    elif (num_flags+len(adjacents_left))==self.action_taken[i][3]:
+                                        for pair in adjacents_left:
+                                            self.toflag.append(pair)
+                                        temp_toflag=collections.deque()
+                                        temp_toflag.append(self.toflag[0])
+                                        self.toflag.popleft()
+                                        self.add_stateSpace("F",temp_toflag[0][0],temp_toflag[0][1],number)
+                                        self.mine_count-=1
+                                        return Action(AI.Action.FLAG,temp_toflag[0][0],temp_toflag[0][1])
+                                    else:
+                                        continue
+                                        #selective opening check
+                        
+                                else:
+                                    #return Action(AI.Action.LEAVE)
+                                    continue
+                            #Random Uncover
+                            tileX=self.action_taken[-1][1]
+                            tileY=self.action_taken[-1][2]
+                            neighbors_list=self.neighbors(tileX,tileY)
+                            adjacents_left=self.adjacent_left(neighbors_list)
+                            if adjacents_left:
+                                random_tile=adjacents_left[(int)(len(adjacents_left)/2)]
+                                self.todo.append(random_tile)
+                                self.counter=len(self.todo)
+                                temp_todo=collections.deque()
+                                temp_todo.append(self.todo[0])
+                                self.todo.popleft()
+                                self.add_stateSpace("U",temp_todo[0][0],temp_todo[0][1],number)
+                                return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
+                            else:
+                                #GIVE UP!!!!! 
+                                return Action(AI.Action.LEAVE)
+                        
+                elif num_flags+len(adjacents_left)==number:
+                    if adjacents_left:
+                            for pair in adjacents_left:
+                                self.toflag.append(pair)
+                            #check continue condition
+                            self.mine_count-=1
+                            self.add_stateSpace("F",self.toflag[0][0],self.toflag[0][1],number)
+                            temp_toflag=collections.deque()
+                            temp_toflag.append(self.toflag[0])
+                            self.toflag.popleft()
+                            return Action(AI.Action.FLAG,temp_toflag[0][0],temp_toflag[0][1])
+                    else:
+                        for i in range(1,len(self.action_taken)):
+                                if self.action_taken[i][3]==0:
+                                    tileX=self.action_taken[i-1][1]
+                                    tileY=self.action_taken[i-1][2]
+                                    neighbors_list=self.neighbors(tileX,tileY)
+                                    adjacents_left=self.adjacent_left(neighbors_list)
+                                    if adjacents_left:
+                                        for pair in adjacents_left:
+                                            self.todo.append(pair)
+                                    else:
+                                        continue 
+                                    self.counter=len(self.todo)
+                                    self.add_stateSpace("U",self.todo[0][0],self.todo[0][1],number)
+                                    temp_todo=collections.deque()
+                                    temp_todo.append(self.todo[0])
+                                    self.todo.popleft()
+                                    return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
+                        
+                                elif self.action_taken[i][3] in range(1,9):
+                                    tileX=self.action_taken[i-1][1]
+                                    tileY=self.action_taken[i-1][2]
+                                    neighbors_list=self.neighbors(tileX,tileY)
+                                    adjacents_left=self.adjacent_left(neighbors_list)
+                                    num_flags=self.num_flag_checker(neighbors_list)
+                                    if num_flags==self.action_taken[i][3]:
+                                        if adjacents_left:
+                                            for pair in adjacents_left:
+                                                self.todo.append(pair);
+                                            self.counter=len(self.todo)
+                                            self.add_stateSpace("U",self.todo[0][0],self.todo[0][1],number)
+                                            temp_todo=collections.deque()
+                                            temp_todo.append(self.todo[0])
+                                            self.todo.popleft()
+                                            return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
+                                        else:
+                                            continue
+                                    elif (num_flags+len(adjacents_left))==self.action_taken[i][3]:
+                                        for pair in adjacents_left:
+                                            self.toflag.append(pair)
+                                        temp_toflag=collections.deque()
+                                        temp_toflag.append(self.toflag[0])
+                                        self.toflag.popleft()
+                                        self.add_stateSpace("F",temp_toflag[0][0],temp_toflag[0][1],number)
+                                        self.mine_count-=1
+                                        return Action(AI.Action.FLAG,temp_toflag[0][0],temp_toflag[0][1])
+                                    else:
+                                        continue
+                                        #selective opening check
+                        
+                                else:
+                                    #return Action(AI.Action.LEAVE)
+                                    continue
+                        #Random Uncover
+                        tileX=self.action_taken[-1][1]
+                        tileY=self.action_taken[-1][2]
+                        neighbors_list=self.neighbors(tileX,tileY)
+                        adjacents_left=self.adjacent_left(neighbors_list)
+                        if adjacents_left:
+                            random_tile=adjacents_left[(int)(len(adjacents_left)/2)]
+                            self.todo.append(random_tile)
+                            self.counter=len(self.todo)
+                            temp_todo=collections.deque()
+                            temp_todo.append(self.todo[0])
+                            self.todo.popleft()
+                            self.add_stateSpace("U",temp_todo[0][0],temp_todo[0][1],number)
+                            return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
+                        else:
+                            #GIVE UP!!!!! 
+                            return Action(AI.Action.LEAVE)
+                    
                 else:
                     for i in range(1,len(self.action_taken)):
                         if self.action_taken[i][3]==0:
@@ -284,7 +487,26 @@ class MyAI( AI ):
                                 #selective opening check
                         
                         else:
-                            return Action(AI.Action.LEAVE)
+                            #return Action(AI.Action.LEAVE)
+                            continue
+                    #Random Uncover
+                    tileX=self.action_taken[-1][1]
+                    tileY=self.action_taken[-1][2]
+                    neighbors_list=self.neighbors(tileX,tileY)
+                    adjacents_left=self.adjacent_left(neighbors_list)
+                    if adjacents_left:
+                        random_tile=adjacents_left[(int)(len(adjacents_left)/2)]
+                        self.todo.append(random_tile)
+                        self.counter=len(self.todo)
+                        temp_todo=collections.deque()
+                        temp_todo.append(self.todo[0])
+                        self.todo.popleft()
+                        self.add_stateSpace("U",temp_todo[0][0],temp_todo[0][1],number)
+                        return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
+                    else:
+                        #GIVE UP!!!!! 
+                        return Action(AI.Action.LEAVE)
+                    
             elif number==-1:
                 tileX=self.action_taken[-1][1]
                 tileY=self.action_taken[-1][2]
@@ -297,8 +519,9 @@ class MyAI( AI ):
                     tileX=pairs[1]
                     neighbors_list=self.neighbors(tileX,tileY)
                     num_flags=self.num_flag_checker(neighbors_list)
+                    adjacents_left=self.adjacent_left(neighbors_list)
                     if num_flags==hint:
-                        adjacents_left=self.adjacent_left(neighbors_list)
+                        
                         if adjacents_left:
                             for pair in adjacents_left:
                                 self.todo.append(pair)
@@ -310,27 +533,35 @@ class MyAI( AI ):
                         else:
                             continue
                             #return Action(AI.Action.LEAVE)
-                    else:
-                        continue
-                for i in range(len(self.action_taken)):
-                    if self.action_taken[i][3]==0:
-                        tileX=self.action_taken[i-1][1]
-                        tileY=self.action_taken[i-1][2]
-                        neighbors_list=self.neighbors(tileX,tileY)
-                        adjacents_left=self.adjacent_left(neighbors_list)
-                        if adjacents_left:
-                            for pair in adjacents_left:
-                                self.todo.append(pair)
-                        else:
-                            continue
-                        self.counter=len(self.todo)
-                        self.add_stateSpace("U",self.todo[0][0],self.todo[0][1],number)
-                        temp_todo=collections.deque()
-                        temp_todo.append(self.todo[0])
-                        self.todo.popleft()
-                        return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
+                    elif num_flags+len(adjacents_left)==hint:
+                        for pair in adjacents_left:
+                            self.toflag.append(pair)
+                        temp_toflag=collections.deque()
+                        temp_toflag.append(self.toflag[0])
+                        self.toflag.popleft()
+                        self.add_stateSpace("F",temp_toflag[0][0],temp_toflag[0][1],number)
+                        self.mine_count-=1
+                        return Action(AI.Action.FLAG,temp_toflag[0][0],temp_toflag[0][1])
                         
-                    elif self.action_taken[i][3] in range(1,9):
+                for i in range(1,len(self.action_taken)):
+                        if self.action_taken[i][3]==0:
+                            tileX=self.action_taken[i-1][1]
+                            tileY=self.action_taken[i-1][2]
+                            neighbors_list=self.neighbors(tileX,tileY)
+                            adjacents_left=self.adjacent_left(neighbors_list)
+                            if adjacents_left:
+                                for pair in adjacents_left:
+                                    self.todo.append(pair)
+                            else:
+                                continue 
+                            self.counter=len(self.todo)
+                            self.add_stateSpace("U",self.todo[0][0],self.todo[0][1],number)
+                            temp_todo=collections.deque()
+                            temp_todo.append(self.todo[0])
+                            self.todo.popleft()
+                            return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
+                        
+                        elif self.action_taken[i][3] in range(1,9):
                             tileX=self.action_taken[i-1][1]
                             tileY=self.action_taken[i-1][2]
                             neighbors_list=self.neighbors(tileX,tileY)
@@ -348,7 +579,7 @@ class MyAI( AI ):
                                     return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
                                 else:
                                     continue
-                            elif (num_flags+adjacents_left)==self.action_taken[i][3]:
+                            elif (num_flags+len(adjacents_left))==self.action_taken[i][3]:
                                 for pair in adjacents_left:
                                     self.toflag.append(pair)
                                 temp_toflag=collections.deque()
@@ -359,7 +590,30 @@ class MyAI( AI ):
                                 return Action(AI.Action.FLAG,temp_toflag[0][0],temp_toflag[0][1])
                             else:
                                 continue
-                                #selective opening check
+                                
+                        
+                        else:
+                            #return Action(AI.Action.LEAVE)
+                            continue
+                #Random Uncover
+                tileX=self.action_taken[-1][1]
+                tileY=self.action_taken[-1][2]
+                neighbors_list=self.neighbors(tileX,tileY)
+                adjacents_left=self.adjacent_left(neighbors_list)
+                if adjacents_left:
+                    random_tile=adjacents_left[(int)(len(adjacents_left)/2)]
+                    self.todo.append(random_tile)
+                    self.counter=len(self.todo)
+                    temp_todo=collections.deque()
+                    temp_todo.append(self.todo[0])
+                    self.todo.popleft()
+                    self.add_stateSpace("U",temp_todo[0][0],temp_todo[0][1],number)
+                    return Action(AI.Action.UNCOVER,temp_todo[0][0],temp_todo[0][1])
+                else:
+                    #GIVE UP!!!!! 
+                    return Action(AI.Action.LEAVE)
+                        
+                        
             else:
                 #Give up condiion
                 return Action(AI.Action.LEAVE)
@@ -379,6 +633,15 @@ class MyAI( AI ):
     def add_stateSpace(self,action,cordx,cordy,pastperceptNo):
         act=[action,cordx,cordy,pastperceptNo]
         self.action_taken.append(act)
+        
+    def getRandom(self):
+        tiles=[]
+        for i in range(self.num_rows):
+            for j in range(self.num_cols):
+                tiles.append([i,j])
+        cords=self.extractcords()
+        uncovered=[i for i in tiles if i not in cords]
+        return uncovered[(int)(len(uncovered)/2)]
         
     def num_flag_checker(self,neighbors_list):
         counter=0
@@ -402,9 +665,11 @@ class MyAI( AI ):
             
     
     def hint_checker(self,pair):
-        for i in range(len(self.curr_world)):
-            if self.curr_world[i][1]==pair[0] and self.curr_world[i][2]==pair[1]:
-                return self.curr_world[i+1][3]
+        tileX=pair[0]
+        tileY=pair[1]
+        for i in range(len(self.action_taken)-1):
+            if self.action_taken[i][1]==tileX and self.action_taken[i][2]==tileY:
+                return self.action_taken[i+1][3]
             else:
                 return None
     
